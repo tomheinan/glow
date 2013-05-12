@@ -1,24 +1,45 @@
 package glow
 
 import (
-	"fmt"
+	"log"
 	"net"
 	"strings"
+	"strconv"
+	"time"
 )
 
 type Status struct {
 	host string
 }
 
-func Scan(host string) (status *Status, err error) {
-	_, addrs, err := net.LookupSRV("minecraft", "tcp", host)
+func Scan(server string) (status *Status, err error) {
+	// parse the server into host/port
+	host, port, err := net.SplitHostPort(server)
 	if err != nil {
-		return nil, err
+		// we weren't given a port; try to find one via dns
+		_, addrs, srvErr := net.LookupSRV("minecraft", "udp", server)
+		if srvErr != nil {
+			_, addrs, srvErr = net.LookupSRV("minecraft", "tcp", server)
+		}
+
+		if srvErr != nil {
+			host = server
+			port = "25565"
+		} else {
+			addr := addrs[0]
+			host = strings.TrimRight(addr.Target, ".")
+			port = strconv.FormatInt(int64(addr.Port), 10)
+		}
 	}
 
-	srv := addrs[0]
-	fmt.Println(strings.TrimRight(srv.Target, "."), srv.Port)
+	log.Println(host, port)
 
-	status = new(Status)
+	conn, err := net.DialTimeout("udp", net.JoinHostPort(host, port), 3 * time.Second)
+	if err != nil {
+		log.Println(err)
+	}
+
+	defer conn.Close()
+
 	return status, nil
 }
