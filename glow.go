@@ -16,7 +16,16 @@ var queryByte byte = 0x00
 var clientBytes = []byte{0x67, 0x6c, 0x6f, 0x77}
 
 type Status struct {
-	host string
+	Host string
+	Port string
+	MotD string
+	GameType string
+	Version string
+	Plugins string
+	MapName string
+	NumPlayers uint16
+	MaxPlayers uint16
+	Players []string
 }
 
 func Scan(server string) (status *Status, err error) {
@@ -60,7 +69,9 @@ func Scan(server string) (status *Status, err error) {
 	conn.Write(constructQueryRequest(token))
 	n, err = conn.Read(buffer)
 
-	parseStatus(buffer)
+	packetData := new(bytes.Buffer)
+	packetData.Write(buffer[0:n])
+	status = parseStatus(packetData)
 
 	return status, nil
 }
@@ -87,6 +98,30 @@ func constructQueryRequest(token int32) []byte {
 	return buffer.Bytes()
 }
 
-func parseStatus(statusBytes []byte) {
-	log.Println(statusBytes)
+func parseStatus(buffer *bytes.Buffer) *Status {
+	status := new(Status)
+
+	byteSet := bytes.Split(buffer.Bytes(), []byte{0x00})
+	for i, val := range byteSet {
+		switch i {
+		case 4:
+			status.MotD = string(val)
+		case 6:
+			status.GameType = string(val)
+		case 10:
+			status.Version = string(val)
+		case 12:
+			status.Plugins = string(val)
+		case 14:
+			status.MapName = string(val)
+		case 16:
+			num64, _ := strconv.ParseUint(string(val), 10, 16)
+			status.NumPlayers = uint16(num64)
+		case 18:
+			max64, _ := strconv.ParseUint(string(val), 10, 16)
+			status.MaxPlayers = uint16(max64)
+		}
+	}
+
+	return status
 }
