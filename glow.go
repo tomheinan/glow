@@ -48,8 +48,6 @@ func Scan(server string) (status *Status, err error) {
 		}
 	}
 
-	log.Println(host, port)
-
 	conn, err := net.DialTimeout("udp", net.JoinHostPort(host, port), 3 * time.Second)
 	if err != nil {
 		log.Println(err)
@@ -72,6 +70,9 @@ func Scan(server string) (status *Status, err error) {
 	packetData := new(bytes.Buffer)
 	packetData.Write(buffer[0:n])
 	status = parseStatus(packetData)
+
+	status.Host = host
+	status.Port = port
 
 	return status, nil
 }
@@ -121,6 +122,13 @@ func parseStatus(buffer *bytes.Buffer) *Status {
 			max64, _ := strconv.ParseUint(string(val), 10, 16)
 			status.MaxPlayers = uint16(max64)
 		}
+	}
+
+	playerSubset := byteSet[26:(len(byteSet) - 2)]
+	status.Players = make([]string, len(playerSubset))
+
+	for i, val := range playerSubset {
+		status.Players[i] = string(val)
 	}
 
 	return status
