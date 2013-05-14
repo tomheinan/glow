@@ -1,7 +1,6 @@
 package glow
 
 import (
-	"log"
 	"net"
 	"strings"
 	"strconv"
@@ -50,22 +49,31 @@ func Scan(server string) (status *Status, err error) {
 
 	conn, err := net.DialTimeout("udp", net.JoinHostPort(host, port), 3 * time.Second)
 	if err != nil {
-		log.Println(err)
+		return nil, err
 	}
 
 	defer conn.Close()
 
+	deadline := time.Now().Add(3 * time.Second)
+	conn.SetDeadline(deadline)
+
 	buffer := make([]byte, 16)
 	conn.Write(constructChallengeRequest())
 	n, err := conn.Read(buffer)
+	if err != nil {
+		return nil, err
+	}
 
 	tokenString := string(buffer[5:(n - 1)])
 	token64, _ := strconv.ParseInt(tokenString, 0, 32)
 	token := int32(token64)
 
-	buffer = make([]byte, 2048)
+	buffer = make([]byte, 4096)
 	conn.Write(constructQueryRequest(token))
 	n, err = conn.Read(buffer)
+	if err != nil {
+		return nil, err
+	}
 
 	packetData := new(bytes.Buffer)
 	packetData.Write(buffer[0:n])

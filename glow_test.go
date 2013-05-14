@@ -1,8 +1,15 @@
 package glow
 
 import "testing"
-import "fmt"
+import "log"
 
 func TestScan(t *testing.T) {
-	fmt.Println(Scan("mc.craftervillemc.com"))
+	for {
+		status, err := Scan("tomheinan.com")
+		if err != nil {
+			log.Println(err)
+		} else {
+			log.Printf("%+v\n", status)
+		}
+	}
 }
