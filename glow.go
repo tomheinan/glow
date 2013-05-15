@@ -4,6 +4,7 @@ import (
 	"net"
 	"strings"
 	"strconv"
+	"regexp"
 	"time"
 	"bytes"
 	"encoding/binary"
@@ -15,16 +16,16 @@ var queryByte byte = 0x00
 var clientBytes = []byte{0x67, 0x6c, 0x6f, 0x77}
 
 type Status struct {
-	Host string
-	Port string
-	MotD string
-	GameType string
-	Version string
-	Plugins string
-	MapName string
-	NumPlayers uint16
-	MaxPlayers uint16
-	Players []string
+	Host string `json:"host"`
+	Port uint16 `json:"port"`
+	MotD string `json:"motd"`
+	GameType string `json:"gametype"`
+	Version string `json:"version"`
+	Plugins []string `json:"plugins"`
+	MapName string `json:"map"`
+	NumPlayers uint16 `json:"num_players"`
+	MaxPlayers uint16 `json:"max_players"`
+	Players []string `json:"players"`
 }
 
 func Scan(server string) (status *Status, err error) {
@@ -80,7 +81,8 @@ func Scan(server string) (status *Status, err error) {
 	status = parseStatus(packetData)
 
 	status.Host = host
-	status.Port = port
+	port64, _ := strconv.ParseUint(port, 10, 16)
+	status.Port = uint16(port64)
 
 	return status, nil
 }
@@ -120,7 +122,13 @@ func parseStatus(buffer *bytes.Buffer) *Status {
 		case 10:
 			status.Version = string(val)
 		case 12:
-			status.Plugins = string(val)
+			plugins := make([]string, 0)
+			if len(val) != 0 {
+				cbRegex := regexp.MustCompile("^[^:]*:\\s")
+				trimmed := cbRegex.ReplaceAll(val, []byte(""))
+				plugins = strings.Split(string(trimmed), "; ")
+			}
+			status.Plugins = plugins
 		case 14:
 			status.MapName = string(val)
 		case 16:
