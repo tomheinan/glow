@@ -5,7 +5,7 @@ import "log"
 
 func TestScan(t *testing.T) {
 	for {
-		status, err := Scan("tomheinan.com")
+		status, err := Scan("mc.craftervillemc.com")
 		if err != nil {
 			log.Println(err)
 		} else {

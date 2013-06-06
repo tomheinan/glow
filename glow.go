@@ -141,7 +141,7 @@ func parseStatus(buffer *bytes.Buffer) *Status {
 	}
 	
 	lim := (len(byteSet) - 2)
-	if 26 >= len(byteSet) && lim < len(byteSet) {
+	if len(byteSet) >= 26 && lim <= len(byteSet) {
 		playerSubset := byteSet[26:lim]
 		status.Players = make([]string, len(playerSubset))
 
