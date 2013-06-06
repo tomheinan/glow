@@ -140,12 +140,18 @@ func parseStatus(buffer *bytes.Buffer) *Status {
 		}
 	}
 	
-	playerSubset := byteSet[26:(len(byteSet) - 2)]
-	status.Players = make([]string, len(playerSubset))
+	lim := (len(byteSet) - 2)
+	if lim >= len(byteSet) {
+		playerSubset := byteSet[26:lim]
+		status.Players = make([]string, len(playerSubset))
 
-	for i, val := range playerSubset {
-		status.Players[i] = string(val)
+		for i, val := range playerSubset {
+			status.Players[i] = string(val)
+		}
+	} else {
+		status.Players = make([]string, 0)
 	}
+	
 
 	return status
 }
