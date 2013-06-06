@@ -69,7 +69,7 @@ func Scan(server string) (status *Status, err error) {
 	token64, _ := strconv.ParseInt(tokenString, 0, 32)
 	token := int32(token64)
 
-	buffer = make([]byte, 4096)
+	buffer = make([]byte, 8192)
 	conn.Write(constructQueryRequest(token))
 	n, err = conn.Read(buffer)
 	if err != nil {
@@ -139,7 +139,7 @@ func parseStatus(buffer *bytes.Buffer) *Status {
 			status.MaxPlayers = uint16(max64)
 		}
 	}
-
+	
 	playerSubset := byteSet[26:(len(byteSet) - 2)]
 	status.Players = make([]string, len(playerSubset))
 
